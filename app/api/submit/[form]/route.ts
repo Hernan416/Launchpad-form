@@ -35,14 +35,14 @@ const payloadSchema = z.object({
 
 export async function POST(req: NextRequest, { params }: { params: { form: string } }) {
   if (params.form !== "v1" && params.form !== "v2") {
-    return NextResponse.json({ error: "Formulario no válido" }, { status: 404 });
+    return NextResponse.json({ error: "Invalid form" }, { status: 404 });
   }
 
   const json = await req.json().catch(() => null);
   const parsed = payloadSchema.safeParse(json);
 
   if (!parsed.success) {
-    return NextResponse.json({ error: "Datos de formulario inválidos" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid form data" }, { status: 400 });
   }
 
   const { formTitle, respondentLabel, answers, questions } = parsed.data;
@@ -61,9 +61,9 @@ export async function POST(req: NextRequest, { params }: { params: { form: strin
 
     return NextResponse.json({ ok: true, documentLink });
   } catch (error) {
-    console.error("Error al procesar el envío del formulario:", error);
+    console.error("Error processing form submission:", error);
     return NextResponse.json(
-      { error: "No se pudo guardar el formulario. Intenta de nuevo más tarde." },
+      { error: "We couldn't save your form. Please try again later." },
       { status: 500 }
     );
   }

@@ -15,8 +15,8 @@ const SCOPES = [
 
 if (!CLIENT_ID || !CLIENT_SECRET) {
   console.error(
-    "Define GOOGLE_CLIENT_ID y GOOGLE_CLIENT_SECRET como variables de entorno antes de correr este script.\n" +
-      'Ejemplo (PowerShell): $env:GOOGLE_CLIENT_ID="..."; $env:GOOGLE_CLIENT_SECRET="..."; npm run get-refresh-token'
+    "Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET as environment variables before running this script.\n" +
+      'Example (PowerShell): $env:GOOGLE_CLIENT_ID="..."; $env:GOOGLE_CLIENT_SECRET="..."; npm run get-refresh-token'
   );
   process.exit(1);
 }
@@ -41,21 +41,21 @@ const server = http.createServer(async (req, res) => {
 
   if (!code) {
     res.writeHead(400, { "Content-Type": "text/plain" });
-    res.end("Falta el parámetro code en la respuesta de Google.");
+    res.end("Missing 'code' parameter in Google's response.");
     return;
   }
 
   try {
     const { tokens } = await oauth2Client.getToken(code);
     res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
-    res.end("<h1>Listo ✅</h1><p>Ya puedes cerrar esta ventana y volver a la terminal.</p>");
+    res.end("<h1>Done</h1><p>You can close this window and go back to the terminal.</p>");
 
-    console.log("\nTokens recibidos correctamente.\n");
+    console.log("\nTokens received successfully.\n");
     console.log("GOOGLE_REFRESH_TOKEN=" + tokens.refresh_token);
-    console.log("\nCopia este valor a tu archivo .env.local\n");
+    console.log("\nCopy this value into your .env.local file\n");
   } catch (err) {
     res.writeHead(500, { "Content-Type": "text/plain" });
-    res.end("Error al intercambiar el código por tokens.");
+    res.end("Error exchanging the code for tokens.");
     console.error(err);
   } finally {
     server.close();
@@ -64,8 +64,8 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(3333, () => {
-  console.log("Abriendo el navegador para autorizar acceso a Google Drive y Docs...");
-  console.log("Si no se abre automáticamente, visita esta URL:\n");
+  console.log("Opening the browser to authorize access to Google Drive and Docs...");
+  console.log("If it doesn't open automatically, visit this URL:\n");
   console.log(authUrl + "\n");
   open(authUrl);
 });

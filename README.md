@@ -1,33 +1,33 @@
 # LaunchPad Intake Form
 
-Dos formularios tipo Typeform (`/v1` y `/v2`) que guardan cada respuesta como una carpeta + Google Doc dentro de Google Drive.
+Two Typeform-style forms (`/v1` and `/v2`) that save each response as a folder + Google Doc inside Google Drive.
 
-## 1. Instalar dependencias
+## 1. Install dependencies
 
 ```bash
 npm install
 ```
 
-## 2. Configurar OAuth de Google
+## 2. Configure Google OAuth
 
-1. En [Google Cloud Console](https://console.cloud.google.com/apis/credentials), en el mismo proyecto del Client ID que ya tienes (`GOOGLE CLOUD/client_secret_*.json`), habilita las APIs **Google Drive API** y **Google Docs API**.
-2. En ese Client ID (tipo "Web application"), agrega como **Authorized redirect URI**:
+1. In [Google Cloud Console](https://console.cloud.google.com/apis/credentials), on the same project as the Client ID you already have (`GOOGLE CLOUD/client_secret_*.json`), enable the **Google Drive API** and **Google Docs API**.
+2. On that Client ID (type "Web application"), add as an **Authorized redirect URI**:
    ```
    http://localhost:3333/oauth2callback
    ```
-3. Copia `.env.local.example` a `.env.local` y llena `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET` con los valores del JSON descargado.
-4. Genera el `refresh_token` (una sola vez):
+3. Copy `.env.local.example` to `.env.local` and fill in `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` with the values from the downloaded JSON.
+4. Generate the `refresh_token` (one time only):
 
    PowerShell:
    ```powershell
-   $env:GOOGLE_CLIENT_ID="tu-client-id"; $env:GOOGLE_CLIENT_SECRET="tu-client-secret"; npm run get-refresh-token
+   $env:GOOGLE_CLIENT_ID="your-client-id"; $env:GOOGLE_CLIENT_SECRET="your-client-secret"; npm run get-refresh-token
    ```
 
-   Se abrirá el navegador para iniciar sesión con la cuenta de Google que tendrá acceso a Drive. Copia el `GOOGLE_REFRESH_TOKEN` que imprime la terminal a tu `.env.local`.
+   This opens the browser to sign in with the Google account that will have access to Drive. Copy the `GOOGLE_REFRESH_TOKEN` printed in the terminal into your `.env.local`.
 
-5. Crea (o reutiliza) una carpeta en Google Drive, compártela si hace falta con la cuenta usada en el paso anterior, y copia su ID (el valor después de `/folders/` en la URL) en `GOOGLE_DRIVE_PARENT_FOLDER_ID`.
+5. Create (or reuse) a folder in Google Drive, share it if needed with the account used in the previous step, and copy its ID (the value after `/folders/` in the URL) into `GOOGLE_DRIVE_PARENT_FOLDER_ID`.
 
-## 3. Correr en local
+## 3. Run locally
 
 ```bash
 npm run dev
@@ -36,18 +36,18 @@ npm run dev
 - http://localhost:3000/v1
 - http://localhost:3000/v2
 
-## 4. Reemplazar las preguntas reales
+## 4. Replace the real questions
 
-Edita `lib/questions/v1.ts` y `lib/questions/v2.ts`. Cada pregunta soporta: `short_text`, `long_text`, `email`, `phone`, `single_choice`, `multiple_choice`.
+Edit `lib/questions/v1.ts` and `lib/questions/v2.ts`. Each question supports: `short_text`, `long_text`, `email`, `phone`, `single_choice`, `multiple_choice`.
 
-> La pregunta con `id: "name"` (o `"company"` si no existe) se usa como nombre del respondiente para nombrar la carpeta creada en Drive.
+> The question with `id: "name"` (or `"company"` if it doesn't exist) is used as the respondent's name to label the folder created in Drive.
 
-## 5. Desplegar en Vercel
+## 5. Deploy to Vercel
 
 ```bash
 vercel
 ```
 
-En el dashboard del proyecto en Vercel, agrega las mismas 4 variables de entorno de `.env.local` (Settings → Environment Variables).
+In the Vercel project dashboard, add the same 4 environment variables from `.env.local` (Settings → Environment Variables).
 
-No es necesario volver a generar el `refresh_token` para producción: el mismo valor sirve mientras no se revoque el acceso desde la cuenta de Google.
+You don't need to regenerate the `refresh_token` for production: the same value keeps working until access is revoked from the Google account.

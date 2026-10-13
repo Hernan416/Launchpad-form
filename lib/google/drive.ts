@@ -4,7 +4,7 @@ import { OAuth2Client } from "google-auth-library";
 export async function createRespondentFolder(auth: OAuth2Client, respondentLabel: string) {
   const parentFolderId = process.env.GOOGLE_DRIVE_PARENT_FOLDER_ID;
   if (!parentFolderId) {
-    throw new Error("Falta la variable de entorno GOOGLE_DRIVE_PARENT_FOLDER_ID");
+    throw new Error("Missing environment variable GOOGLE_DRIVE_PARENT_FOLDER_ID");
   }
 
   const drive = google.drive({ version: "v3", auth });
@@ -22,7 +22,7 @@ export async function createRespondentFolder(auth: OAuth2Client, respondentLabel
   });
 
   if (!folder.data.id) {
-    throw new Error("No se pudo crear la carpeta en Google Drive");
+    throw new Error("Could not create the folder in Google Drive");
   }
 
   return { folderId: folder.data.id, folderLink: folder.data.webViewLink ?? null };

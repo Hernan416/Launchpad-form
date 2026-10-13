@@ -92,6 +92,10 @@ export function TypeformRunner({
     }
   };
 
+  const handleBack = () => {
+    setStepIndex((i) => Math.max(i - 1, 0));
+  };
+
   if (status === "intro" && intro) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-8 bg-brand-bg px-6 text-center">
@@ -166,6 +170,7 @@ export function TypeformRunner({
             value={answers[currentQuestion.id]}
             onChange={handleChange}
             onSubmit={handleAdvance}
+            onBack={stepIndex > 0 ? handleBack : undefined}
           />
         </motion.div>
       </main>

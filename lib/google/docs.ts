@@ -4,10 +4,10 @@ import { Answers, Question } from "@/lib/types";
 
 function formatAnswer(question: Question, answers: Answers): string {
   const value = answers[question.id];
-  if (value === undefined || value === null || value === "") return "Sin respuesta";
+  if (value === undefined || value === null || value === "") return "No answer";
 
   if (Array.isArray(value)) {
-    if (value.length === 0) return "Sin respuesta";
+    if (value.length === 0) return "No answer";
     const labels = value.map((v) => question.options?.find((o) => o.value === v)?.label ?? v);
     return labels.join(", ");
   }
@@ -74,7 +74,7 @@ async function writeDocContent(
 
   lines.push({ text: formTitle, style: "TITLE" });
   lines.push({
-    text: `Respondido por: ${respondentLabel} — ${new Date().toLocaleString("es-MX")}`,
+    text: `Submitted by: ${respondentLabel} — ${new Date().toLocaleString("en-US")}`,
     style: "NORMAL_TEXT",
   });
 

@@ -8,24 +8,56 @@ interface QuestionStepProps {
   value: string | string[] | undefined;
   onChange: (value: string | string[]) => void;
   onSubmit: () => void;
+  onBack?: () => void;
 }
 
-export function QuestionStep({ question, value, onChange, onSubmit }: QuestionStepProps) {
+const URL_PATTERN = /(https?:\/\/[^\s]+)/g;
+
+function renderWithLinks(text: string) {
+  return text.split(URL_PATTERN).map((part, i) =>
+    /^https?:\/\//.test(part) ? (
+      <a
+        key={i}
+        href={part}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-brand-blue underline hover:text-brand-blue-dark"
+      >
+        {part}
+      </a>
+    ) : (
+      <span key={i}>{part}</span>
+    )
+  );
+}
+
+export function QuestionStep({ question, value, onChange, onSubmit, onBack }: QuestionStepProps) {
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
+  const backButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     inputRef.current?.focus();
   }, [question.id]);
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey && question.type !== "long_text") {
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key !== "Enter") return;
+      if (document.activeElement === backButtonRef.current) return;
+      const tag = (document.activeElement?.tagName || "").toLowerCase();
+      if (tag === "textarea") {
+        if (e.metaKey || e.ctrlKey) {
+          e.preventDefault();
+          onSubmit();
+        }
+        return;
+      }
+      if (e.shiftKey) return;
       e.preventDefault();
       onSubmit();
-    }
-    if (e.key === "Enter" && e.metaKey) {
-      onSubmit();
-    }
-  };
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [onSubmit]);
 
   return (
     <div className="w-full max-w-xl">
@@ -34,7 +66,9 @@ export function QuestionStep({ question, value, onChange, onSubmit }: QuestionSt
         {question.required && <span className="ml-1 text-brand-blue">*</span>}
       </h2>
       {question.description && (
-        <p className="mt-2 whitespace-pre-line text-sm text-brand-muted">{question.description}</p>
+        <p className="mt-2 whitespace-pre-line text-sm text-brand-muted">
+          {renderWithLinks(question.description)}
+        </p>
       )}
 
       <div className="mt-8">
@@ -47,7 +81,6 @@ export function QuestionStep({ question, value, onChange, onSubmit }: QuestionSt
             value={(value as string) ?? ""}
             placeholder={question.placeholder ?? "Type your answer here..."}
             onChange={(e) => onChange(e.target.value)}
-            onKeyDown={handleKeyDown}
             className="w-full border-b-2 border-brand-line bg-transparent pb-3 text-lg text-brand-ink outline-none transition-colors placeholder:text-brand-muted/60 focus:border-brand-blue"
           />
         )}
@@ -58,7 +91,6 @@ export function QuestionStep({ question, value, onChange, onSubmit }: QuestionSt
             value={(value as string) ?? ""}
             placeholder={question.placeholder ?? "Type your answer here..."}
             onChange={(e) => onChange(e.target.value)}
-            onKeyDown={handleKeyDown}
             rows={5}
             className="w-full resize-none rounded-brand-lg border border-brand-line bg-brand-surface p-4 text-lg text-brand-ink outline-none transition-colors placeholder:text-brand-muted/60 focus:border-brand-blue"
           />
@@ -131,7 +163,17 @@ export function QuestionStep({ question, value, onChange, onSubmit }: QuestionSt
         )}
       </div>
 
-      <div className="mt-8 flex items-center gap-4">
+      <div className="mt-8 flex items-center gap-3">
+        {onBack && (
+          <button
+            ref={backButtonRef}
+            type="button"
+            onClick={onBack}
+            className="rounded-brand border border-brand-line px-5 py-3 text-sm font-semibold text-brand-ink transition-colors hover:bg-brand-surface"
+          >
+            Back
+          </button>
+        )}
         <button
           type="button"
           onClick={onSubmit}
