@@ -25,7 +25,7 @@ npm install
 
    This opens the browser to sign in with the Google account that will have access to Drive. Copy the `GOOGLE_REFRESH_TOKEN` printed in the terminal into your `.env.local`.
 
-5. Create (or reuse) a folder in Google Drive, share it if needed with the account used in the previous step, and copy its ID (the value after `/folders/` in the URL) into `GOOGLE_DRIVE_PARENT_FOLDER_ID`.
+5. `GOOGLE_DRIVE_PARENT_FOLDER_ID_V1` and `GOOGLE_DRIVE_PARENT_FOLDER_ID_V2` are already filled in `.env.local.example` with the two Drive folders currently in use (`/v1` and `/v2` each get their own parent folder). Make sure the Google account used in step 4 has edit access to both folders. To point either form at a different folder, replace the ID with the value after `/folders/` in that folder's Drive URL.
 
 ## 3. Run locally
 
@@ -40,7 +40,7 @@ npm run dev
 
 Edit `lib/questions/v1.ts` and `lib/questions/v2.ts`. Each question supports: `short_text`, `long_text`, `email`, `phone`, `single_choice`, `multiple_choice`.
 
-> The question with `id: "name"` (or `"company"` if it doesn't exist) is used as the respondent's name to label the folder created in Drive.
+> The questions with `id: "company_name"` and `id: "name"` are used to name the Drive folder created for each response, as `{company name} - {full name} - {creation date}`.
 
 ## 5. Deploy to Vercel
 
@@ -48,6 +48,6 @@ Edit `lib/questions/v1.ts` and `lib/questions/v2.ts`. Each question supports: `s
 vercel
 ```
 
-In the Vercel project dashboard, add the same 4 environment variables from `.env.local` (Settings → Environment Variables).
+In the Vercel project dashboard, add the same 5 environment variables from `.env.local` (Settings → Environment Variables).
 
 You don't need to regenerate the `refresh_token` for production: the same value keeps working until access is revoked from the Google account.

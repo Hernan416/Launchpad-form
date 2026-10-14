@@ -1,16 +1,12 @@
 import { google } from "googleapis";
 import { OAuth2Client } from "google-auth-library";
 
-export async function createRespondentFolder(auth: OAuth2Client, respondentLabel: string) {
-  const parentFolderId = process.env.GOOGLE_DRIVE_PARENT_FOLDER_ID;
-  if (!parentFolderId) {
-    throw new Error("Missing environment variable GOOGLE_DRIVE_PARENT_FOLDER_ID");
-  }
-
+export async function createRespondentFolder(
+  auth: OAuth2Client,
+  folderName: string,
+  parentFolderId: string
+) {
   const drive = google.drive({ version: "v3", auth });
-
-  const timestamp = new Date().toISOString().replace("T", " ").slice(0, 16);
-  const folderName = `${respondentLabel} — ${timestamp}`;
 
   const folder = await drive.files.create({
     requestBody: {
@@ -19,6 +15,7 @@ export async function createRespondentFolder(auth: OAuth2Client, respondentLabel
       parents: [parentFolderId],
     },
     fields: "id, webViewLink",
+    supportsAllDrives: true,
   });
 
   if (!folder.data.id) {

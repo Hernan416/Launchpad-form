@@ -2,12 +2,23 @@
 
 import { useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
+import type { Country } from "react-phone-number-input";
 import { Answers, FormSlug, Question } from "@/lib/types";
 import { ProgressBar } from "@/components/ProgressBar";
 import { QuestionStep } from "@/components/QuestionStep";
 import { LaunchPadLogo } from "@/components/LaunchPadLogo";
+import { BookingCalendar } from "@/components/BookingCalendar";
+import { isValidEmail, isValidPhone } from "@/lib/validation";
 
-type Status = "intro" | "running" | "submitting" | "success" | "error";
+type Status =
+  | "intro"
+  | "intro_details"
+  | "running"
+  | "submitting"
+  | "booking_prompt"
+  | "booking"
+  | "done"
+  | "error";
 
 export interface IntroContent {
   eyebrow?: string;
@@ -22,11 +33,13 @@ export function TypeformRunner({
   formTitle,
   questions,
   intro,
+  defaultCountry,
 }: {
   formSlug: FormSlug;
   formTitle: string;
   questions: Question[];
   intro?: IntroContent;
+  defaultCountry?: Country;
 }) {
   const [stepIndex, setStepIndex] = useState(0);
   const [answers, setAnswers] = useState<Answers>({});
@@ -38,10 +51,19 @@ export function TypeformRunner({
   const isLastStep = stepIndex === questions.length - 1;
 
   const canAdvance = useMemo(() => {
-    if (!currentQuestion?.required) return true;
-    const value = answers[currentQuestion.id];
-    if (Array.isArray(value)) return value.length > 0;
-    return Boolean(value && value.trim().length > 0);
+    const value = answers[currentQuestion?.id];
+    const hasValue = Array.isArray(value) ? value.length > 0 : Boolean(value && value.trim().length > 0);
+
+    if (!hasValue) return !currentQuestion?.required;
+
+    if (currentQuestion.type === "email" && typeof value === "string") {
+      return isValidEmail(value);
+    }
+    if (currentQuestion.type === "phone" && typeof value === "string") {
+      return isValidPhone(value);
+    }
+
+    return true;
   }, [answers, currentQuestion]);
 
   const handleChange = (value: string | string[]) => {
@@ -53,7 +75,7 @@ export function TypeformRunner({
     setErrorMessage(null);
 
     const respondentLabel =
-      (answers["name"] as string) || (answers["company"] as string) || "Unnamed response";
+      (answers["name"] as string) || (answers["company_name"] as string) || "Unnamed response";
 
     try {
       const res = await fetch(`/api/submit/${formSlug}`, {
@@ -73,7 +95,7 @@ export function TypeformRunner({
         throw new Error(body?.error || "We couldn't submit your form.");
       }
 
-      setStatus("success");
+      setStatus("booking_prompt");
     } catch (err) {
       isSubmittingRef.current = false;
       setStatus("error");
@@ -114,13 +136,9 @@ export function TypeformRunner({
           <h1 className="font-display text-3xl font-bold text-brand-ink sm:text-4xl">
             {intro.title}
           </h1>
-          <p className="text-brand-muted">{intro.description}</p>
-          {intro.estimatedTime && (
-            <p className="text-sm text-brand-muted/80">⏱ {intro.estimatedTime}</p>
-          )}
           <button
             type="button"
-            onClick={() => setStatus("running")}
+            onClick={() => setStatus("intro_details")}
             className="mt-4 rounded-brand bg-brand-blue px-8 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-blue-dark"
           >
             {intro.cta ?? "Start"}
@@ -130,7 +148,95 @@ export function TypeformRunner({
     );
   }
 
-  if (status === "success") {
+  if (status === "intro_details" && intro) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-8 bg-brand-bg px-6 text-center">
+        <LaunchPadLogo className="h-10 w-auto" />
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="flex max-w-xl flex-col items-center gap-4"
+        >
+          <p className="text-brand-muted">{intro.description}</p>
+          {intro.estimatedTime && (
+            <p className="text-sm text-brand-muted/80">⏱ {intro.estimatedTime}</p>
+          )}
+          <button
+            type="button"
+            onClick={() => setStatus("running")}
+            className="mt-4 rounded-brand bg-brand-blue px-8 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-blue-dark"
+          >
+            Next
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (status === "booking_prompt") {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-brand-bg px-6 text-center">
+        <LaunchPadLogo className="h-10 w-auto" />
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.4 }}
+          className="flex max-w-md flex-col items-center gap-4"
+        >
+          <h1 className="font-display text-3xl font-bold text-brand-ink">You&apos;re all set!</h1>
+          <p className="text-brand-muted">
+            Your answers were received. The last step is scheduling your onboarding call so we
+            can kick things off.
+          </p>
+          <div className="mt-2 flex flex-col items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setStatus("booking")}
+              className="rounded-brand bg-brand-blue px-8 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-blue-dark"
+            >
+              Schedule My Onboarding Call
+            </button>
+            <button
+              type="button"
+              onClick={() => setStatus("done")}
+              className="text-sm font-medium text-brand-muted underline transition-colors hover:text-brand-ink"
+            >
+              I&apos;ve already booked my onboarding call
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (status === "booking") {
+    return (
+      <div className="flex min-h-screen flex-col items-center gap-6 bg-brand-bg px-6 py-10 text-center">
+        <LaunchPadLogo className="h-10 w-auto" />
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="flex w-full max-w-5xl flex-col items-center gap-4"
+        >
+          <h1 className="font-display text-2xl font-bold text-brand-ink sm:text-3xl">
+            Pick a time for your onboarding call
+          </h1>
+          <BookingCalendar />
+          <button
+            type="button"
+            onClick={() => setStatus("done")}
+            className="text-sm font-medium text-brand-muted underline transition-colors hover:text-brand-ink"
+          >
+            I&apos;ll do this later
+          </button>
+        </motion.div>
+      </div>
+    );
+  }
+
+  if (status === "done") {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-6 bg-brand-bg px-6 text-center">
         <LaunchPadLogo className="h-10 w-auto" />
@@ -171,6 +277,7 @@ export function TypeformRunner({
             onChange={handleChange}
             onSubmit={handleAdvance}
             onBack={stepIndex > 0 ? handleBack : undefined}
+            defaultCountry={defaultCountry}
           />
         </motion.div>
       </main>

@@ -47,9 +47,29 @@ export async function POST(req: NextRequest, { params }: { params: { form: strin
 
   const { formTitle, respondentLabel, answers, questions } = parsed.data;
 
+  const parentFolderId =
+    params.form === "v1"
+      ? process.env.GOOGLE_DRIVE_PARENT_FOLDER_ID_V1
+      : process.env.GOOGLE_DRIVE_PARENT_FOLDER_ID_V2;
+
+  if (!parentFolderId) {
+    console.error(
+      `Missing environment variable GOOGLE_DRIVE_PARENT_FOLDER_ID_${params.form.toUpperCase()}`
+    );
+    return NextResponse.json(
+      { error: "We couldn't save your form. Please try again later." },
+      { status: 500 }
+    );
+  }
+
+  const companyName = (answers["company_name"] as string | undefined)?.trim() || "Unknown company";
+  const fullName = (answers["name"] as string | undefined)?.trim() || "Unknown name";
+  const createdDate = new Date().toISOString().slice(0, 10);
+  const folderName = `${companyName} - ${fullName} - ${createdDate}`;
+
   try {
     const auth = getGoogleAuthClient();
-    const { folderId } = await createRespondentFolder(auth, respondentLabel);
+    const { folderId } = await createRespondentFolder(auth, folderName, parentFolderId);
     const { documentLink } = await createResponseDoc(
       auth,
       folderId,

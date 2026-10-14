@@ -9,7 +9,7 @@ const config: Config = {
           blue: "#0067EB",
           "blue-dark": "#0052BD",
           yellow: "#FFCF00",
-          bg: "#080808",
+          bg: "#000000",
           surface: "#111111",
           "surface-hover": "#181818",
           ink: "#FFFFFF",

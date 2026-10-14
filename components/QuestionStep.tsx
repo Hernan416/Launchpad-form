@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import type { Country } from "react-phone-number-input";
 import { Question } from "@/lib/types";
+import { PhoneField } from "@/components/PhoneField";
+import { isValidEmail, isValidPhone } from "@/lib/validation";
 
 interface QuestionStepProps {
   question: Question;
@@ -9,6 +12,7 @@ interface QuestionStepProps {
   onChange: (value: string | string[]) => void;
   onSubmit: () => void;
   onBack?: () => void;
+  defaultCountry?: Country;
 }
 
 const URL_PATTERN = /(https?:\/\/[^\s]+)/g;
@@ -31,9 +35,20 @@ function renderWithLinks(text: string) {
   );
 }
 
-export function QuestionStep({ question, value, onChange, onSubmit, onBack }: QuestionStepProps) {
+export function QuestionStep({
+  question,
+  value,
+  onChange,
+  onSubmit,
+  onBack,
+  defaultCountry,
+}: QuestionStepProps) {
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
   const backButtonRef = useRef<HTMLButtonElement>(null);
+
+  const stringValue = typeof value === "string" ? value : "";
+  const showEmailError = question.type === "email" && stringValue.length > 0 && !isValidEmail(stringValue);
+  const showPhoneError = question.type === "phone" && stringValue.length > 0 && !isValidPhone(stringValue);
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -72,17 +87,32 @@ export function QuestionStep({ question, value, onChange, onSubmit, onBack }: Qu
       )}
 
       <div className="mt-8">
-        {(question.type === "short_text" ||
-          question.type === "email" ||
-          question.type === "phone") && (
+        {(question.type === "short_text" || question.type === "email") && (
           <input
             ref={inputRef as React.RefObject<HTMLInputElement>}
-            type={question.type === "email" ? "email" : question.type === "phone" ? "tel" : "text"}
+            type={question.type === "email" ? "email" : "text"}
             value={(value as string) ?? ""}
             placeholder={question.placeholder ?? "Type your answer here..."}
             onChange={(e) => onChange(e.target.value)}
-            className="w-full border-b-2 border-brand-line bg-transparent pb-3 text-lg text-brand-ink outline-none transition-colors placeholder:text-brand-muted/60 focus:border-brand-blue"
+            className={`w-full border-b-2 bg-transparent pb-3 text-lg text-brand-ink outline-none transition-colors placeholder:text-brand-muted/60 ${
+              showEmailError ? "border-red-500" : "border-brand-line focus:border-brand-blue"
+            }`}
           />
+        )}
+        {showEmailError && (
+          <p className="mt-2 text-sm text-red-400">Please enter a valid email address.</p>
+        )}
+
+        {question.type === "phone" && (
+          <PhoneField
+            inputRef={inputRef as React.Ref<HTMLInputElement>}
+            value={(value as string) ?? ""}
+            onChange={(next) => onChange(next)}
+            defaultCountry={defaultCountry}
+          />
+        )}
+        {showPhoneError && (
+          <p className="mt-2 text-sm text-red-400">Please enter a valid phone number.</p>
         )}
 
         {question.type === "long_text" && (

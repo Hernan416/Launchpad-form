@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   title: "LaunchPad",
   description: "LaunchPad intake form",
   icons: {
-    icon: "/logo.png",
+    icon: "/icon.png",
   },
 };
 

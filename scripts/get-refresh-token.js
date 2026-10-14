@@ -2,14 +2,13 @@
 const http = require("http");
 const { URL } = require("url");
 const { google } = require("googleapis");
-const open = require("open");
 
 const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 const REDIRECT_URI = "http://localhost:3333/oauth2callback";
 
 const SCOPES = [
-  "https://www.googleapis.com/auth/drive.file",
+  "https://www.googleapis.com/auth/drive",
   "https://www.googleapis.com/auth/documents",
 ];
 
@@ -64,8 +63,6 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(3333, () => {
-  console.log("Opening the browser to authorize access to Google Drive and Docs...");
-  console.log("If it doesn't open automatically, visit this URL:\n");
+  console.log("Open this URL in your browser to authorize access to Google Drive and Docs:\n");
   console.log(authUrl + "\n");
-  open(authUrl);
 });

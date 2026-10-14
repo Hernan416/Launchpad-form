@@ -1,5 +1,6 @@
 import { TypeformRunner } from "@/components/TypeformRunner";
 import { FORM_V1_INTRO, FORM_V1_TITLE, formV1Questions } from "@/lib/questions/v1";
+import { getVisitorCountry } from "@/lib/geo";
 
 export default function FormV1Page() {
   return (
@@ -8,6 +9,7 @@ export default function FormV1Page() {
       formTitle={FORM_V1_TITLE}
       questions={formV1Questions}
       intro={FORM_V1_INTRO}
+      defaultCountry={getVisitorCountry()}
     />
   );
 }

@@ -25,6 +25,12 @@ export const formV1Questions: Question[] = [
     required: true,
   },
   {
+    id: "company_name",
+    type: "short_text",
+    title: "What is your company name?",
+    required: true,
+  },
+  {
     id: "email",
     type: "email",
     title: "What is your email address?",
@@ -43,6 +49,12 @@ export const formV1Questions: Question[] = [
     required: true,
   },
   {
+    id: "office_address",
+    type: "short_text",
+    title: "What is your office address?",
+    required: true,
+  },
+  {
     id: "customer_journey",
     type: "long_text",
     title:
@@ -53,6 +65,12 @@ export const formV1Questions: Question[] = [
       "• Do you give the quote on the spot, or send it after?\n" +
       "• How do they pay for the roof replacement? (Deposits, finance, etc)\n" +
       "• How far are you willing to drive to do an inspection?",
+    required: true,
+  },
+  {
+    id: "drive_distance",
+    type: "short_text",
+    title: "How far are you willing to drive to do an inspection?",
     required: true,
   },
   {

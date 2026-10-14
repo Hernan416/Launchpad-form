@@ -18,3 +18,42 @@ body {
 ::selection {
   background: #2f6dff55;
 }
+
+/* react-phone-number-input — themed to match the brand's text inputs */
+.launchpad-phone-input {
+  --PhoneInput-color--focus: #0067eb;
+  --PhoneInputCountryFlag-borderColor: rgba(255, 255, 255, 0.15);
+  --PhoneInputCountrySelectArrow-color: rgba(255, 255, 255, 0.45);
+  width: 100%;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 0.75rem;
+  transition: border-color 0.15s ease;
+}
+
+.launchpad-phone-input:focus-within {
+  border-color: #0067eb;
+}
+
+.launchpad-phone-input .PhoneInputCountry {
+  margin-right: 0.75rem;
+}
+
+.launchpad-phone-input .PhoneInputCountryIcon {
+  width: 1.75rem;
+  height: 1.25rem;
+}
+
+.launchpad-phone-input__number {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #ffffff;
+  font-size: 1.125rem;
+  font-family: inherit;
+}
+
+.launchpad-phone-input__number::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
