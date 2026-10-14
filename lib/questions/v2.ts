@@ -1,5 +1,4 @@
-import { IntroContent } from "@/components/TypeformRunner";
-import { Question } from "@/lib/types";
+import { IntroContent, Question } from "@/lib/types";
 
 export const FORM_V2_TITLE = "LaunchPad Intake Form — SDR Only";
 
@@ -64,7 +63,7 @@ export const formV2Questions: Question[] = [
   {
     id: "drive_distance",
     type: "short_text",
-    title: "How far are you willing to drive to do an inspection?",
+    title: "How far (in minutes or hours) are you willing to drive to do an inspection?",
     required: true,
   },
   {

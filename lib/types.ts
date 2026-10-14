@@ -26,3 +26,22 @@ export interface SubmitPayload {
   answers: Answers;
   questions: Question[];
 }
+
+export interface IntroContent {
+  eyebrow?: string;
+  title: string;
+  description: string;
+  estimatedTime?: string;
+  cta?: string;
+}
+
+export interface FormConfig {
+  title: string;
+  intro: IntroContent;
+  questions: Question[];
+}
+
+export interface AppConfig {
+  v1: FormConfig;
+  v2: FormConfig;
+}

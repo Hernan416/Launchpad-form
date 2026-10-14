@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import type { Country } from "react-phone-number-input";
-import { Answers, FormSlug, Question } from "@/lib/types";
+import { Answers, FormSlug, IntroContent, Question } from "@/lib/types";
 import { ProgressBar } from "@/components/ProgressBar";
 import { QuestionStep } from "@/components/QuestionStep";
 import { LaunchPadLogo } from "@/components/LaunchPadLogo";
@@ -20,13 +20,7 @@ type Status =
   | "done"
   | "error";
 
-export interface IntroContent {
-  eyebrow?: string;
-  title: string;
-  description: string;
-  estimatedTime?: string;
-  cta?: string;
-}
+export type { IntroContent };
 
 export function TypeformRunner({
   formSlug,
@@ -227,7 +221,7 @@ export function TypeformRunner({
           <button
             type="button"
             onClick={() => setStatus("done")}
-            className="text-sm font-medium text-brand-muted underline transition-colors hover:text-brand-ink"
+            className="text-sm font-medium text-white underline transition-opacity hover:opacity-80"
           >
             I&apos;ll do this later
           </button>

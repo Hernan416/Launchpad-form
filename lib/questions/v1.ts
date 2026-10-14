@@ -1,5 +1,4 @@
-import { IntroContent } from "@/components/TypeformRunner";
-import { Question } from "@/lib/types";
+import { IntroContent, Question } from "@/lib/types";
 
 export const FORM_V1_TITLE = "LaunchPad Intake Form";
 
@@ -70,13 +69,14 @@ export const formV1Questions: Question[] = [
   {
     id: "drive_distance",
     type: "short_text",
-    title: "How far are you willing to drive to do an inspection?",
+    title: "How far (in minutes or hours) are you willing to drive to do an inspection?",
     required: true,
   },
   {
     id: "ad_budget",
     type: "short_text",
     title: "What's your monthly ad budget?",
+    description: "Most clients start between $2000-$5000 for best results.",
     required: true,
   },
   {

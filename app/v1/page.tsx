@@ -1,14 +1,16 @@
 import { TypeformRunner } from "@/components/TypeformRunner";
-import { FORM_V1_INTRO, FORM_V1_TITLE, formV1Questions } from "@/lib/questions/v1";
+import { getAppConfig } from "@/lib/google/config-store";
 import { getVisitorCountry } from "@/lib/geo";
 
-export default function FormV1Page() {
+export default async function FormV1Page() {
+  const config = await getAppConfig();
+
   return (
     <TypeformRunner
       formSlug="v1"
-      formTitle={FORM_V1_TITLE}
-      questions={formV1Questions}
-      intro={FORM_V1_INTRO}
+      formTitle={config.v1.title}
+      questions={config.v1.questions}
+      intro={config.v1.intro}
       defaultCountry={getVisitorCountry()}
     />
   );
