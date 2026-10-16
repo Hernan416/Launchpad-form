@@ -2,6 +2,13 @@ import { docs_v1, google } from "googleapis";
 import { OAuth2Client } from "google-auth-library";
 import { Answers, Question } from "@/lib/types";
 
+// Noah's master "Campaign Doc" — every new client's doc is a full copy of
+// this (keeping every tab: checklist, filming instructions, tech setup,
+// etc. byte-for-byte identical), with only the "Onboarding" tab's content
+// replaced by that client's actual form answers.
+const CAMPAIGN_DOC_TEMPLATE_ID = "1wf2_HsKYoHdvJpEn6jTn6Oh6riNyxRx5bedOWjkZzss";
+const ONBOARDING_TAB_TITLE = "onboarding";
+
 // LaunchPad brand accents — darker, more subdued tones for a printable
 // white-page document (the bright on-screen brand colors read as too
 // loud/washed out on paper).
@@ -46,9 +53,23 @@ function formatAnswer(question: Question, answers: Answers): string {
   return value;
 }
 
+function findOnboardingTab(
+  tabs: docs_v1.Schema$Tab[] | undefined
+): docs_v1.Schema$Tab | undefined {
+  for (const tab of tabs ?? []) {
+    if (tab.tabProperties?.title?.trim().toLowerCase() === ONBOARDING_TAB_TITLE) {
+      return tab;
+    }
+    const nested = findOnboardingTab(tab.childTabs);
+    if (nested) return nested;
+  }
+  return undefined;
+}
+
 export async function createResponseDoc(
   auth: OAuth2Client,
   folderId: string,
+  companyName: string,
   formTitle: string,
   respondentLabel: string,
   questions: Question[],
@@ -57,25 +78,46 @@ export async function createResponseDoc(
   const docsApi = google.docs({ version: "v1", auth });
   const driveApi = google.drive({ version: "v3", auth });
 
-  // Created directly inside the destination folder via the Drive API —
-  // Docs API's own `documents.create` always lands in "My Drive" root,
-  // which would require a separate get-parents + move round trip.
-  const file = await driveApi.files.create({
+  // Full Drive-level copy preserves every tab (formatting, tabs structure,
+  // everything) exactly as-is — only the Onboarding tab's content gets
+  // replaced below.
+  const copy = await driveApi.files.copy({
+    fileId: CAMPAIGN_DOC_TEMPLATE_ID,
     requestBody: {
-      name: `${formTitle} — ${respondentLabel}`,
-      mimeType: "application/vnd.google-apps.document",
+      name: `Campaign Doc - ${companyName}`,
       parents: [folderId],
     },
     fields: "id",
     supportsAllDrives: true,
   });
 
-  const documentId = file.data.id;
+  const documentId = copy.data.id;
   if (!documentId) {
-    throw new Error("Could not create the Google Doc");
+    throw new Error("Could not create the Google Doc from the campaign template");
   }
 
-  await writeDocContent(docsApi, documentId, formTitle, respondentLabel, questions, answers);
+  const doc = await docsApi.documents.get({ documentId, includeTabsContent: true });
+  const onboardingTab = findOnboardingTab(doc.data.tabs);
+  if (!onboardingTab?.tabProperties?.tabId) {
+    throw new Error(
+      `Campaign Doc template is missing an "Onboarding" tab (documentId=${documentId})`
+    );
+  }
+  const tabId = onboardingTab.tabProperties.tabId;
+
+  const content = onboardingTab.documentTab?.body?.content ?? [];
+  const lastEndIndex = content.length > 0 ? content[content.length - 1].endIndex ?? 1 : 1;
+
+  await writeOnboardingTabContent(
+    docsApi,
+    documentId,
+    tabId,
+    lastEndIndex,
+    formTitle,
+    respondentLabel,
+    questions,
+    answers
+  );
 
   return {
     documentId,
@@ -91,9 +133,11 @@ interface Block {
   textFields?: string;
 }
 
-async function writeDocContent(
+async function writeOnboardingTabContent(
   docsApi: docs_v1.Docs,
   documentId: string,
+  tabId: string,
+  existingContentEndIndex: number,
   formTitle: string,
   respondentLabel: string,
   questions: Question[],
@@ -188,6 +232,17 @@ async function writeDocContent(
 
   // --- Build requests -------------------------------------------------
   const requests: docs_v1.Schema$Request[] = [];
+
+  // Clear the template's existing Onboarding content first (everything
+  // except the segment's final newline, which Docs API refuses to delete).
+  if (existingContentEndIndex > 2) {
+    requests.push({
+      deleteContentRange: {
+        range: { tabId, startIndex: 1, endIndex: existingContentEndIndex - 1 },
+      },
+    });
+  }
+
   let cursor = 1;
   const ranges: { start: number; end: number; block: Block }[] = [];
 
@@ -195,7 +250,7 @@ async function writeDocContent(
     const text = `${block.text}\n`;
     requests.push({
       insertText: {
-        location: { index: cursor },
+        location: { tabId, index: cursor },
         text,
       },
     });
@@ -206,7 +261,7 @@ async function writeDocContent(
   for (const { start, end, block } of ranges) {
     requests.push({
       updateParagraphStyle: {
-        range: { startIndex: start, endIndex: end },
+        range: { tabId, startIndex: start, endIndex: end },
         paragraphStyle: block.paragraphStyle,
         fields: block.paragraphFields,
       },
@@ -215,7 +270,7 @@ async function writeDocContent(
     if (block.textStyle && block.textFields) {
       requests.push({
         updateTextStyle: {
-          range: { startIndex: start, endIndex: end },
+          range: { tabId, startIndex: start, endIndex: end },
           textStyle: block.textStyle,
           fields: block.textFields,
         },

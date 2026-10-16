@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getGoogleAuthClient } from "@/lib/google/auth";
-import { createRespondentFolder } from "@/lib/google/drive";
+import { createAssetSubfolders, createRespondentFolder } from "@/lib/google/drive";
 import { createResponseDoc } from "@/lib/google/docs";
+import { notifyIntakeSubmission } from "@/lib/ghl";
 
 export const runtime = "nodejs";
 
@@ -69,15 +70,23 @@ export async function POST(req: NextRequest, { params }: { params: { form: strin
 
   try {
     const auth = getGoogleAuthClient();
-    const { folderId } = await createRespondentFolder(auth, folderName, parentFolderId);
-    const { documentLink } = await createResponseDoc(
-      auth,
-      folderId,
-      formTitle,
-      respondentLabel,
-      questions,
-      answers
-    );
+    const { folderId, folderLink } = await createRespondentFolder(auth, folderName, parentFolderId);
+    const [{ documentLink }] = await Promise.all([
+      createResponseDoc(auth, folderId, companyName, formTitle, respondentLabel, questions, answers),
+      createAssetSubfolders(auth, folderId),
+      // Best-effort: an internal GHL notification is a nice-to-have, not a
+      // reason to fail a submission the client already successfully saved —
+      // caught here so it can never reject this Promise.all. Still awaited
+      // (rather than fired-and-forgotten) so the serverless function stays
+      // alive long enough for the request to actually go out.
+      notifyIntakeSubmission({
+        clientName: fullName,
+        companyName,
+        driveLink: folderLink ?? `https://drive.google.com/drive/folders/${folderId}`,
+      }).catch((err) => {
+        console.error("Error notifying GHL of form submission:", err);
+      }),
+    ]);
 
     return NextResponse.json({ ok: true, documentLink });
   } catch (error) {

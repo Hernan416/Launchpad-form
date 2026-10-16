@@ -90,7 +90,7 @@ export function AdminPanel({ initialConfig }: { initialConfig: AppConfig }) {
   function removeQuestion(index: number) {
     const q = formConfig.questions[index];
     const confirmed = window.confirm(
-      `Delete question "${q.title || q.id}"? This cannot be undone once you save.`
+      `Are you sure you want to remove the question "${q.title || q.id}"?\n\nIt will disappear from the form once you click Save. You can still click "Discard changes" before saving if you change your mind.`
     );
     if (!confirmed) return;
     const questions = formConfig.questions.slice();
@@ -130,12 +130,14 @@ export function AdminPanel({ initialConfig }: { initialConfig: AppConfig }) {
   async function handleSave() {
     if (duplicateIds.size > 0) {
       setSaveState("error");
-      setSaveMessage(`Duplicate question IDs: ${Array.from(duplicateIds).join(", ")}. Fix before saving.`);
+      setSaveMessage(
+        `A couple of questions are using the same ID (${Array.from(duplicateIds).join(", ")}). Please give each question its own unique ID before saving.`
+      );
       return;
     }
     if (formConfig.questions.some((q) => !q.id.trim())) {
       setSaveState("error");
-      setSaveMessage("Every question needs a non-empty ID.");
+      setSaveMessage("One of the questions is missing its ID. Please fill it in before saving.");
       return;
     }
 
@@ -152,14 +154,20 @@ export function AdminPanel({ initialConfig }: { initialConfig: AppConfig }) {
 
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body?.error || "Save failed.");
+        throw new Error(
+          body?.error || "Something went wrong and we couldn't save your changes. Please try again."
+        );
       }
 
       setSaveState("success");
-      setSaveMessage("Saved. Changes are live on the public form now.");
+      setSaveMessage("All set! Your changes are saved and are now live on the form.");
     } catch (err) {
       setSaveState("error");
-      setSaveMessage(err instanceof Error ? err.message : "Save failed.");
+      setSaveMessage(
+        err instanceof Error
+          ? err.message
+          : "Something went wrong and we couldn't save your changes. Please try again."
+      );
     } finally {
       setSaving(false);
     }
@@ -176,7 +184,9 @@ export function AdminPanel({ initialConfig }: { initialConfig: AppConfig }) {
   }
 
   function handleDiscard() {
-    const confirmed = window.confirm("Discard all unsaved changes and reload the last saved config?");
+    const confirmed = window.confirm(
+      "Are you sure you want to discard your changes?\n\nEverything you've edited since your last save will be lost, and the form will go back to how it looked before."
+    );
     if (!confirmed) return;
     setConfig(cloneConfig(initialConfig));
     setSaveState("idle");
@@ -435,17 +445,18 @@ function QuestionCard({
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <Field label="ID">
+        <Field label="Internal ID (not shown to people filling out the form)">
           <TextInput value={question.id} onChange={(value) => onChange({ id: value })} />
           {isLoadBearing && (
             <p className="mt-1 text-xs text-brand-yellow">
-              ⚠ Load-bearing ID — the submit route reads <code>answers[&quot;{question.id}&quot;]</code> to
-              build the Drive folder name. Renaming it will break folder naming unless you also
-              update app/api/submit/[form]/route.ts.
+              ⚠ Please don&apos;t change this one. The system uses it behind the scenes to name the
+              folders created for each submission, so renaming it could break that.
             </p>
           )}
           {isDuplicateId && (
-            <p className="mt-1 text-xs text-red-400">Duplicate ID — must be unique within this form.</p>
+            <p className="mt-1 text-xs text-red-400">
+              Another question is already using this same ID. Please make it unique.
+            </p>
           )}
         </Field>
 
